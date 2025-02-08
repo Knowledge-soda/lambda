@@ -58,6 +58,8 @@ class LookAheadText:
 def tokenize(text, strict=False):
     it = LookAheadText(text)
     for cur, new in it:
+        if cur.isspace():
+            continue
         debug = it.get_debug()
         try:
             literal = Token.literal(cur, debug)
