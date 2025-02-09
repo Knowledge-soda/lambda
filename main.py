@@ -30,7 +30,7 @@ def evaluate_term(term, mode=0):
                 break
         term, changed = term.reduce()
     if not mode:
-        print("= {}".format(term))
+        print("= {}".format(nice_version(term)))
 
 
 def full_reduce(term):

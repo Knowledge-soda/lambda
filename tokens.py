@@ -102,7 +102,7 @@ class Token:
     def reduce(self):
         return (self.clone(), False)
 
-    def alpha(self, n, x):
+    def beta(self, n, x):
         if n == self.index:
             return x.clone()
         else:

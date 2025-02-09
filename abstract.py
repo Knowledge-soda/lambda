@@ -45,10 +45,10 @@ class Application:
         newright, right_changed = self.right.reduce()
         return (Application(newleft, newright), right_changed)
 
-    def alpha(self, n, x):
+    def beta(self, n, x):
         return Application(
-            self.left.alpha(n, x),
-            self.right.alpha(n, x)
+            self.left.beta(n, x),
+            self.right.beta(n, x)
         )
 
 
@@ -83,7 +83,11 @@ class Abstraction:
         self.variables = first
 
     def clone(self):
-        return Abstraction(self.variables, self.term.clone())
+        if isinstance(self.variables, list):
+            clone_vars = [var.clone() for var in self.variables]
+        else:
+            clone_vars = self.variables.clone()
+        return Abstraction(clone_vars, self.term.clone())
 
     def compile(self, termsbook):
         self.term = self.term.compile(termsbook)
@@ -111,12 +115,12 @@ class Abstraction:
         return (Abstraction(self.variables.clone(), newterm), changed)
 
     def apply(self, x):
-        return self.term.alpha(0, x)
+        return self.term.beta(0, x)
 
-    def alpha(self, n, x):
+    def beta(self, n, x):
         return Abstraction(
             self.variables.clone(),
-            self.term.alpha(n + 1, x)
+            self.term.beta(n + 1, x)
         )
 
 
