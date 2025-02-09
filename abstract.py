@@ -19,9 +19,22 @@ class Application:
     def clone(self):
         return Application(self.left.clone(), self.right.clone())
 
+    def compile(self, termsbook):
+        self.left = self.left.compile(termsbook)
+        self.right = self.right.compile(termsbook)
+        return self
+
     def debrujin(self, variables):
         self.left.debrujin(variables)
         self.right.debrujin(variables)
+
+    def brujin(self, variables, free):
+        self.left.brujin(variables, free)
+        self.right.brujin(variables, free)
+
+    def get_free(self, free):
+        self.left.get_free(free)
+        self.right.get_free(free)
 
     def reduce(self):
         newleft, left_changed = self.left.reduce()
@@ -70,11 +83,28 @@ class Abstraction:
         self.variables = first
 
     def clone(self):
-        return Abstraction(self.variables.clone(), self.term.clone())
+        return Abstraction(self.variables, self.term.clone())
+
+    def compile(self, termsbook):
+        self.term = self.term.compile(termsbook)
+        return self
 
     def debrujin(self, variables):
         sub = (self.variables.inner.name,) + variables
         self.term.debrujin(sub)
+
+    def get_free(self, free):
+        self.term.get_free(free)
+
+    def brujin(self, variables, free):
+        name = self.variables.inner.name[0]
+        newname = self.variables.inner.name
+        count = 0
+        while newname in variables or newname in free:
+            newname = "{}{}".format(name, count)
+            count += 1
+        self.variables.inner.name = newname
+        self.term.brujin((newname, ) + variables, free)
 
     def reduce(self):
         newterm, changed = self.term.reduce()
@@ -88,3 +118,49 @@ class Abstraction:
             self.variables.clone(),
             self.term.alpha(n + 1, x)
         )
+
+
+class Assignment:
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __repr__(self):
+        return "Assignment({} = {})".format(
+                repr(self.name),
+                repr(self.value)
+        )
+
+    def __str__(self):
+        return "{} = {}".format(str(self.name), str(self.value))
+
+
+class Program:
+    def __init__(self):
+        self.lines = []
+        self.terms = {}
+
+    def __repr__(self):
+        return "PROGRAM:\n\t{}".format(
+            "\n\t".join(repr(line) for line in self.lines))
+
+    def __str__(self):
+        return "PROGRAM:\n\t{}".format(
+            "\n\t".join(str(line) for line in self.lines))
+
+    def add_line(self, line):
+        if isinstance(line, Assignment):
+            line.value = line.value.compile(self.terms)
+            self.terms[line.name.inner.name] = line.value
+        else:
+            line = line.compile(self.terms)
+        self.lines.append(line)
+
+    def get_singles(self):
+        for line in self.lines:
+            if not isinstance(line, Assignment):
+                yield line
+
+    def get_last(self):
+        if not isinstance(self.lines[-1], Assignment):
+            return self.lines[-1]

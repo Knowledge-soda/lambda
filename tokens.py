@@ -35,13 +35,16 @@ class Termname:
     def __repr__(self):
         return "TERMNAME '{}'".format(self.name)
 
+    def __str__(self):
+        return self.name
+
 
 class Token:
     def __init__(self, inner, debug, index=None):
         self.inner = inner
         self.debug = debug
         self.index = index
-        if isinstance(self.inner, Literal):
+        if isinstance(self.inner, Literal) or self.inner == END:
             self.type = self.inner
         else:
             self.type = type(self.inner)
@@ -72,6 +75,14 @@ class Token:
             raise RuntimeError
         return Token(self.inner.clone(), self.debug, self.index)
 
+    def compile(self, termsbook):
+        if self.type == Variable:
+            return self
+        trans = termsbook.get(self.inner.name, None)
+        if trans is None:
+            raise RuntimeError
+        return trans.clone()
+
     def debrujin(self, variables):
         if self.type != Variable:
             raise RuntimeError
@@ -79,6 +90,14 @@ class Token:
             self.index = variables.index(self.inner.name)
         else:
             self.index = -1
+
+    def get_free(self, free):
+        if self.index == -1:
+            free.add(self.inner.name)
+
+    def brujin(self, variables, free):
+        if self.index >= 0:
+            self.inner.name = variables[self.index]
 
     def reduce(self):
         return (self.clone(), False)

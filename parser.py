@@ -1,6 +1,7 @@
 import tokens
-from tokens import Literal
-from abstract import Application, Abstraction
+from tokens import Literal, END
+from abstract import Application, Abstraction, Assignment, Program
+from errors import LambdaSyntaxError, ExpectedDifferentToken
 
 
 class ParserLL1:
@@ -23,7 +24,7 @@ class ParserLL1:
 
     def must(self, token_type):
         if (self.now.type != token_type):
-            raise RuntimeError
+            raise ExpectedDifferentToken(self.now, token_type)
         ret = self.now
         next(self)
         return ret
@@ -32,7 +33,7 @@ class ParserLL1:
 def abstraction(it, sugar):
     it.must(Literal.ABSTRACTOR)
     if it.now.type != tokens.Variable:
-        raise RuntimeError
+        raise ExpectedDifferentToken(it.now, tokens.Variable)
     if sugar:
         variables = []
         while it.now.type == tokens.Variable:
@@ -40,16 +41,17 @@ def abstraction(it, sugar):
             next(it)
     else:
         variables = it.now
+        next(it)
 
     if it.now.type == Literal.DOT:
         next(it)
     elif it.now.type != Literal.OPEN:
-        raise RuntimeError
+        raise ExpectedDifferentToken(it.now, Literal.OPEN)
     body = term(it, sugar)
     return Abstraction(variables, body)
 
 
-def subterm(it, sugar=True):
+def subterm(it, sugar):
     if it.now.type == Literal.ABSTRACTOR:
         return abstraction(it, sugar)
     if it.now.type in (tokens.Variable, tokens.Termname):
@@ -61,7 +63,8 @@ def subterm(it, sugar=True):
         ret = term(it, sugar)
         it.must(Literal.CLOSED)
         return ret
-    raise RuntimeError
+    raise LambdaSyntaxError("Unknown token at the beggining of subterm",
+                            it.now)
 
 
 def term(it, sugar=True):
@@ -71,3 +74,28 @@ def term(it, sugar=True):
         right = subterm(it, sugar)
         left = Application(left, right)
     return left
+
+
+def assignment(it, sugar):
+    termname = it.must(tokens.Termname)
+    it.must(Literal.EQUAL)
+    value = term(it, sugar)
+    return Assignment(termname, value)
+
+
+def line(it, prog, sugar=True):
+    if it.now == Literal.NEWLINE:
+        return
+    if it.look_ahead.type == Literal.EQUAL:
+        prog.add_line(assignment(it, sugar))
+    else:
+        prog.add_line(term(it, sugar))
+
+
+def program(it, sugar=True):
+    prog = Program()
+    while True:
+        line(it, prog, sugar)
+        if it.now.type == END:
+            return prog
+        it.must(Literal.NEWLINE)

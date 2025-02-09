@@ -1,8 +1,12 @@
-class LexicalError(Exception):
+class LambdaError(Exception):
+    pass
+
+
+class LexicalError(LambdaError):
     def __init__(self, message, debug):
         row, col = debug
         super().__init__(
-            "[line: {}, column: {}] {}".format(row, col, message)
+            "{} [on line {}, column {}]".format(message, row, col)
         )
 
 
@@ -33,3 +37,18 @@ class UnknownTokenError(LexicalError):
             "No token starts with '{}'!".format(char),
             debug
          )
+
+
+class LambdaSyntaxError(LambdaError):
+    def __init__(self, message, token):
+        row, col = token.debug
+        super().__init__(
+            "{} [{} - on line {} column {}]".format(
+                message, repr(token), row, col))
+
+
+class ExpectedDifferentToken(LambdaSyntaxError):
+    def __init__(self, token, expected):
+        super().__init__(
+            "Expected token of type '{}'!".format(repr(expected)),
+            token)

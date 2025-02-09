@@ -31,7 +31,7 @@ class LookAheadText:
                 self.col += 1
             self.now = look_ahead
         self.look_ahead = END
-        yield self.now, look_ahead
+        yield self.now, self.look_ahead
 
     def get_debug(self):
         return self.row, self.col
@@ -57,20 +57,26 @@ class LookAheadText:
 
 def tokenize(text, strict=False):
     it = LookAheadText(text)
+    depth = 0
     for cur, new in it:
-        if cur.isspace():
-            continue
         debug = it.get_debug()
         try:
             literal = Token.literal(cur, debug)
-            yield literal
+            if cur == "(":
+                depth += 1
+            if cur == ")":
+                depth -= 1
+            if cur != "\n" or not depth:
+                yield literal
             continue
         except ValueError:
             pass
+        if cur.isspace():
+            continue
         if cur.islower():
             if strict and cur != "v":
                 raise WrongVariableNameError(cur, debug)
-            if not new.isdecimal():
+            if new == END or not new.isdecimal():
                 if strict:
                     raise NoIndexError(debug)
                 else:
