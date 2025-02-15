@@ -1,3 +1,6 @@
+from tokens import Token
+
+
 class Application:
     def __init__(self, left, right):
         self.left = left
@@ -5,16 +8,28 @@ class Application:
 
     def __repr__(self):
         return "Application({}, {})".format(
-                repr(self.left),
-                repr(self.right)
-                )
+            repr(self.left),
+            repr(self.right)
+        )
 
     def __str__(self):
-        return "({} {})".format(str(self.left), str(self.right))
+        leftstr = str(self.left)
+        rightstr = str(self.right)
+        if isinstance(self.right, Token):
+            if isinstance(self.left, Abstraction):
+                return "({}) {}".format(leftstr, rightstr)
+            return "{} {}".format(leftstr, rightstr)
+        if isinstance(self.left, Token):
+            return "{} ({})".format(leftstr, rightstr)
+        return "({}) ({})".format(leftstr, rightstr)
 
     def desugar(self):
         self.left.desugar()
         self.right.desugar()
+
+    def resugar(self):
+        self.left.resugar()
+        self.right.resugar()
 
     def clone(self):
         return Application(self.left.clone(), self.right.clone())
@@ -51,6 +66,12 @@ class Application:
             self.right.beta(n, x)
         )
 
+    def cut(self, depth, difference):
+        return Application(
+            self.left.cut(depth, difference),
+            self.right.cut(depth, difference)
+        )
+
 
 class Abstraction:
     def __init__(self, variables, term):
@@ -69,9 +90,9 @@ class Abstraction:
         if isinstance(self.variables, list):
             params = " ".join(
                     variable.inner.name for variable in self.variables)
-            return "(\\{} . {})".format(params, str(self.term))
+            return "\\{} . {}".format(params, str(self.term))
         else:
-            return "(\\{} {})".format(str(self.variables), str(self.term))
+            return "\\{} . {}".format(str(self.variables), str(self.term))
 
     def desugar(self):
         self.term.desugar()
@@ -81,6 +102,15 @@ class Abstraction:
         for variable in reversed(self.variables[1:]):
             self.term = Abstraction(variable, self.term)
         self.variables = first
+
+    def resugar(self):
+        term = self.term
+        self.variables = [self.variables]
+        while isinstance(term, Abstraction):
+            self.variables.append(term.variables)
+            term = term.term
+        self.term = term
+        self.term.resugar()
 
     def clone(self):
         if isinstance(self.variables, list):
@@ -123,6 +153,12 @@ class Abstraction:
             self.term.beta(n + 1, x)
         )
 
+    def cut(self, depth, difference):
+        return Abstraction(
+            self.variables.clone(),
+            self.term.cut(depth + 1, difference)
+        )
+
 
 class Assignment:
     def __init__(self, name, value):
@@ -131,8 +167,8 @@ class Assignment:
 
     def __repr__(self):
         return "Assignment({} = {})".format(
-                repr(self.name),
-                repr(self.value)
+            repr(self.name),
+            repr(self.value)
         )
 
     def __str__(self):

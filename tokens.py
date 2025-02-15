@@ -50,6 +50,8 @@ class Token:
             self.type = type(self.inner)
 
     def __repr__(self):
+        if self.index is not None and self.index != -1:
+            return "VARIABLE '{}'".format(self.index)
         return repr(self.inner)
 
     def __str__(self):
@@ -68,6 +70,9 @@ class Token:
         return cls(Termname(name), debug)
 
     def desugar(self):
+        pass
+
+    def resugar(self):
         pass
 
     def clone(self):
@@ -103,7 +108,17 @@ class Token:
         return (self.clone(), False)
 
     def beta(self, n, x):
-        if n == self.index:
-            return x.clone()
+        if self.index > n:
+            return Token(self.inner.clone(), self.debug, self.index - 1)
+        elif n == self.index:
+            return x.cut(0, n)
         else:
             return self.clone()
+
+    def cut(self, depth, difference):
+        if self.type != Variable:
+            raise RuntimeError
+        new_index = self.index
+        if new_index >= depth:
+            new_index += difference
+        return Token(self.inner.clone(), self.debug, new_index)

@@ -11,6 +11,7 @@ def nice_version(term):
     free = set()
     newterm.get_free(free)
     newterm.brujin((), free)
+    newterm.resugar()
     return newterm
 
 
