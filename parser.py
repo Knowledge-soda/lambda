@@ -63,7 +63,7 @@ def subterm(it, sugar):
         ret = term(it, sugar)
         it.must(Literal.CLOSED)
         return ret
-    raise LambdaSyntaxError("Unknown token at the beggining of subterm",
+    raise LambdaSyntaxError("Invalid token at the beggining of subterm",
                             it.now)
 
 
@@ -95,6 +95,8 @@ def line(it, prog, sugar=True):
 def program(it, sugar=True):
     prog = Program()
     while True:
+        if it.now.type == END:
+            return prog
         line(it, prog, sugar)
         if it.now.type == END:
             return prog

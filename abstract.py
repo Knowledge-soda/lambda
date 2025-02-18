@@ -90,9 +90,9 @@ class Abstraction:
         if isinstance(self.variables, list):
             params = " ".join(
                     variable.inner.name for variable in self.variables)
-            return "\\{} . {}".format(params, str(self.term))
+            return "λ{} . {}".format(params, str(self.term))
         else:
-            return "\\{} . {}".format(str(self.variables), str(self.term))
+            return "λ{} . {}".format(str(self.variables), str(self.term))
 
     def desugar(self):
         self.term.desugar()

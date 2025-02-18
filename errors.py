@@ -52,3 +52,16 @@ class ExpectedDifferentToken(LambdaSyntaxError):
         super().__init__(
             "Expected token of type '{}'!".format(repr(expected)),
             token)
+
+
+class SemanticError(LambdaError):
+    def __init__(self, message, debug):
+        row, col = debug
+        super().__init__(
+            "{} [on line {}, column {}]".format(message, row, col))
+
+
+class UndefinedTerm(SemanticError):
+    def __init__(self, termname, debug):
+        super().__init__(
+            "{} not defined!".format(termname), debug)

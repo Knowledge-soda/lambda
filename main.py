@@ -57,10 +57,12 @@ def repl(strict=False, sugar=True, mode=2):
     program = Program()
     while True:
         try:
-            text = input("\\> ")
+            text = input("λ> ")
         except KeyboardInterrupt:
             print()
             break
+        if not text:
+            continue
         try:
             stream = lexer.tokenize(text, strict)
             par = parser.ParserLL1(stream)

@@ -61,6 +61,8 @@ def tokenize(text, strict=False):
     for cur, new in it:
         debug = it.get_debug()
         try:
+            if cur == "\\":
+                cur = "λ"
             literal = Token.literal(cur, debug)
             if cur == "(":
                 depth += 1

@@ -1,12 +1,14 @@
 from enum import Enum
 
+from errors import UndefinedTerm
+
 
 class END:
     pass
 
 
 class Literal(Enum):
-    ABSTRACTOR = "\\"
+    ABSTRACTOR = "λ"
     OPEN = "("
     CLOSED = ")"
     DOT = "."
@@ -85,7 +87,7 @@ class Token:
             return self
         trans = termsbook.get(self.inner.name, None)
         if trans is None:
-            raise RuntimeError
+            raise UndefinedTerm(self.inner.name, self.debug)
         return trans.clone()
 
     def debrujin(self, variables):
