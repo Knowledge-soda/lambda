@@ -40,6 +40,9 @@ class Termname:
     def __str__(self):
         return self.name
 
+    def clone(self):
+        return Termname(self.name)
+
 
 class Token:
     def __init__(self, inner, debug, index=None):
@@ -58,6 +61,13 @@ class Token:
 
     def __str__(self):
         return str(self.inner)
+
+    def __eq__(self, other):
+        if not isinstance(other, Token):
+            return False
+        if self.index == other.index == -1:
+            return self.inner.name == other.inner.name
+        return self.index == other.index
 
     @classmethod
     def literal(cls, char, debug):
@@ -78,7 +88,7 @@ class Token:
         pass
 
     def clone(self):
-        if self.type != Variable:
+        if self.type not in (Variable, Termname):
             raise RuntimeError
         return Token(self.inner.clone(), self.debug, self.index)
 
@@ -90,7 +100,10 @@ class Token:
             raise UndefinedTerm(self.inner.name, self.debug)
         return trans.clone()
 
-    def debrujin(self, variables):
+    def decompile(self, program):
+        return self.clone()
+
+    def debruijn(self, variables):
         if self.type != Variable:
             raise RuntimeError
         if self.inner.name in variables:
@@ -102,7 +115,9 @@ class Token:
         if self.index == -1:
             free.add(self.inner.name)
 
-    def brujin(self, variables, free):
+    def bruijn(self, variables, free):
+        if self.type == Termname:
+            return
         if self.index >= 0:
             self.inner.name = variables[self.index]
 

@@ -23,6 +23,11 @@ class Application:
             return "{} ({})".format(leftstr, rightstr)
         return "({}) ({})".format(leftstr, rightstr)
 
+    def __eq__(self, other):
+        if not isinstance(other, Application):
+            return False
+        return self.left == other.left and self.right == other.right
+
     def desugar(self):
         self.left.desugar()
         self.right.desugar()
@@ -39,13 +44,21 @@ class Application:
         self.right = self.right.compile(termsbook)
         return self
 
-    def debrujin(self, variables):
-        self.left.debrujin(variables)
-        self.right.debrujin(variables)
+    def decompile(self, program):
+        name = program.search(self)
+        if name is None:
+            return Application(
+                self.left.decompile(program),
+                self.right.decompile(program))
+        return Token.termname(name, (1, 1))
 
-    def brujin(self, variables, free):
-        self.left.brujin(variables, free)
-        self.right.brujin(variables, free)
+    def debruijn(self, variables):
+        self.left.debruijn(variables)
+        self.right.debruijn(variables)
+
+    def bruijn(self, variables, free):
+        self.left.bruijn(variables, free)
+        self.right.bruijn(variables, free)
 
     def get_free(self, free):
         self.left.get_free(free)
@@ -94,6 +107,11 @@ class Abstraction:
         else:
             return "λ{} . {}".format(str(self.variables), str(self.term))
 
+    def __eq__(self, other):
+        if not isinstance(other, Abstraction):
+            return False
+        return self.term == other.term
+
     def desugar(self):
         self.term.desugar()
         if not isinstance(self.variables, list):
@@ -123,14 +141,22 @@ class Abstraction:
         self.term = self.term.compile(termsbook)
         return self
 
-    def debrujin(self, variables):
+    def decompile(self, program):
+        name = program.search(self)
+        if name is None:
+            return Abstraction(
+                self.variables.clone(),
+                self.term.decompile(program))
+        return Token.termname(name, (1, 1))
+
+    def debruijn(self, variables):
         sub = (self.variables.inner.name,) + variables
-        self.term.debrujin(sub)
+        self.term.debruijn(sub)
 
     def get_free(self, free):
         self.term.get_free(free)
 
-    def brujin(self, variables, free):
+    def bruijn(self, variables, free):
         name = self.variables.inner.name[0]
         newname = self.variables.inner.name
         count = 0
@@ -138,7 +164,7 @@ class Abstraction:
             newname = "{}{}".format(name, count)
             count += 1
         self.variables.inner.name = newname
-        self.term.brujin((newname, ) + variables, free)
+        self.term.bruijn((newname, ) + variables, free)
 
     def reduce(self):
         newterm, changed = self.term.reduce()
@@ -191,6 +217,8 @@ class Program:
     def add_line(self, line):
         if isinstance(line, Assignment):
             line.value = line.value.compile(self.terms)
+            line.value.desugar()
+            line.value.debruijn(())
             self.terms[line.name.inner.name] = line.value
         else:
             line = line.compile(self.terms)
@@ -204,3 +232,9 @@ class Program:
     def get_last(self):
         if not isinstance(self.lines[-1], Assignment):
             return self.lines[-1]
+
+    def search(self, term):
+        for key, item in self.terms.items():
+            if term == item:
+                return key
+        return None

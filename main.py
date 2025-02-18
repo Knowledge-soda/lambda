@@ -10,17 +10,17 @@ def nice_version(term):
     newterm = term.clone()
     free = set()
     newterm.get_free(free)
-    newterm.brujin((), free)
+    newterm.bruijn((), free)
     newterm.resugar()
     return newterm
 
 
 def evaluate_term(term, mode=0):
     term.desugar()
-    term.debrujin(())
+    term.debruijn(())
     changed = True
     while changed:
-        text = "= {}".format(nice_version(term))
+        text = "-> {}".format(nice_version(term))
         if mode == 1:
             print(text)
         elif mode == 2:
@@ -31,12 +31,13 @@ def evaluate_term(term, mode=0):
                 break
         term, changed = term.reduce()
     if not mode:
-        print("= {}".format(nice_version(term)))
+        print("-> {}".format(nice_version(term)))
+    return term
 
 
 def full_reduce(term):
     term.desugar()
-    term.debrujin(())
+    term.debruijn(())
     changed = True
     while changed:
         term, changed = term.reduce()
@@ -48,9 +49,9 @@ def execute_program(text, strict=False, sugar=True):
     par = parser.ParserLL1(stream)
     prog = parser.program(par, sugar)
     for line in prog.get_singles():
-        print("{} =".format(line))
+        print("{} ->".format(line))
         res = full_reduce(line)
-        print("= {}".format(nice_version(res)))
+        print("-> {}".format(nice_version(res)))
 
 
 def repl(strict=False, sugar=True, mode=2):
@@ -72,7 +73,8 @@ def repl(strict=False, sugar=True, mode=2):
             continue
         term = program.get_last()
         if term is not None:
-            evaluate_term(term, mode)
+            result = evaluate_term(term, mode)
+            print("= {}".format(nice_version(result.decompile(program))))
 
 
 if __name__ == "__main__":
