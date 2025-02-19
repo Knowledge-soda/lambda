@@ -1,7 +1,8 @@
 import tokens
 from tokens import Literal, END
 from abstract import (
-    Application, Abstraction, Assignment, ReduceAssign, Program)
+    Application, Abstraction, Assignment, ReduceAssign,
+    Equality, Reduces, Convertible, Program)
 from errors import LambdaSyntaxError, ExpectedDifferentToken
 
 
@@ -99,7 +100,23 @@ def line(it, prog, sugar=True):
     elif it.look_ahead.type == Literal.REDUCE:
         prog.add_line(reduce_assign(it, sugar))
     else:
-        prog.add_line(term(it, sugar))
+        left = term(it, sugar)
+        if it.now.type == Literal.TEST:
+            next(it)
+            right = term(it, sugar)
+            prog.add_line(Equality(left, right))
+        elif it.now.type == Literal.REDUCES:
+            next(it)
+            right = term(it, sugar)
+            prog.add_line(Reduces(left, right))
+        elif it.now.type == Literal.CONVERTIBLE:
+            next(it)
+            right = term(it, sugar)
+            prog.add_line(Convertible(left, right))
+        elif it.now.type == Literal.NEWLINE or it.now.type == END:
+            prog.add_line(left)
+        else:
+            raise LambdaSyntaxError("Expected end of line!", it.now)
 
 
 def program(it, sugar=True):

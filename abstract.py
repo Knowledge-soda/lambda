@@ -225,6 +225,38 @@ class ReduceAssign:
         return "{} <= {}".format(str(self.name), str(self.value))
 
 
+class Test:
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def compile(self, termsbook):
+        self.left = self.left.compile(termsbook)
+        self.left.desugar()
+        self.left.debruijn(())
+        self.right = self.right.compile(termsbook)
+        self.right.desugar()
+        self.right.debruijn(())
+
+
+class Equality(Test):
+    def test(self):
+        return self.left == self.right
+
+
+class Reduces(Test):
+    def test(self):
+        new_left = get_normal_form(self.left)
+        return new_left == self.right
+
+
+class Convertible(Test):
+    def test(self):
+        new_left = get_normal_form(self.left)
+        new_right = get_normal_form(self.right)
+        return new_left == new_right
+
+
 class Program:
     def __init__(self):
         self.lines = []
@@ -248,17 +280,19 @@ class Program:
             line.value = line.value.compile(self.terms)
             line.value = get_normal_form(line.value)
             self.terms[line.name.inner.name] = line.value
+        elif isinstance(line, Test):
+            line.compile(self.terms)
         else:
             line = line.compile(self.terms)
         self.lines.append(line)
 
     def get_singles(self):
         for line in self.lines:
-            if not isinstance(line, Assignment):
+            if not isinstance(line, (Assignment, ReduceAssign)):
                 yield line
 
     def get_last(self):
-        if isinstance(self.lines[-1], (Application, Abstraction, Token)):
+        if not isinstance(self.lines[-1], (Assignment, ReduceAssign)):
             return self.lines[-1]
 
     def search(self, term):

@@ -2,7 +2,7 @@ import argparse
 
 import lexer
 import parser
-from abstract import Program
+from abstract import Program, Test
 from errors import LambdaError
 
 
@@ -72,9 +72,13 @@ def repl(strict=False, sugar=True, mode=2):
             print(err)
             continue
         term = program.get_last()
-        if term is not None:
+        if isinstance(term, Test):
+            print(term.test())
+        elif term is not None:
             result = evaluate_term(term, mode)
-            print("= {}".format(nice_version(result.decompile(program))))
+            short = str(nice_version(result.decompile(program)))
+            if str(result) != short:
+                print("= {}".format(short))
 
 
 if __name__ == "__main__":
