@@ -186,6 +186,16 @@ class Abstraction:
         )
 
 
+def get_normal_form(term):
+    term = term.clone()
+    term.desugar()
+    term.debruijn(())
+    changed = True
+    while changed:
+        term, changed = term.reduce()
+    return term
+
+
 class Assignment:
     def __init__(self, name, value):
         self.name = name
@@ -199,6 +209,20 @@ class Assignment:
 
     def __str__(self):
         return "{} = {}".format(str(self.name), str(self.value))
+
+
+class ReduceAssign:
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __repr__(self):
+        return "ReduceAssign({} <= {})".format(
+            repr(self.name),
+            repr(self.value))
+
+    def __str__(self):
+        return "{} <= {}".format(str(self.name), str(self.value))
 
 
 class Program:
@@ -220,6 +244,10 @@ class Program:
             line.value.desugar()
             line.value.debruijn(())
             self.terms[line.name.inner.name] = line.value
+        elif isinstance(line, ReduceAssign):
+            line.value = line.value.compile(self.terms)
+            line.value = get_normal_form(line.value)
+            self.terms[line.name.inner.name] = line.value
         else:
             line = line.compile(self.terms)
         self.lines.append(line)
@@ -230,7 +258,7 @@ class Program:
                 yield line
 
     def get_last(self):
-        if not isinstance(self.lines[-1], Assignment):
+        if isinstance(self.lines[-1], (Application, Abstraction, Token)):
             return self.lines[-1]
 
     def search(self, term):

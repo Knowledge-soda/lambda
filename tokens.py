@@ -13,6 +13,10 @@ class Literal(Enum):
     CLOSED = ")"
     DOT = "."
     EQUAL = "="
+    REDUCE = "<="
+    TEST = "=="
+    REDUCES = "->"
+    CONVERTIBLE = "~"
     NEWLINE = "\n"
 
 

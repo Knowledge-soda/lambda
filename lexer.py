@@ -60,6 +60,17 @@ def tokenize(text, strict=False):
     depth = 0
     for cur, new in it:
         debug = it.get_debug()
+        if new == END:
+            twochar = cur
+        else:
+            twochar = "".join((cur, new))
+            try:
+                literal = Token.literal(twochar, debug)
+                next(it)
+                yield literal
+                continue
+            except ValueError:
+                pass
         try:
             if cur == "\\":
                 cur = "λ"
@@ -89,6 +100,6 @@ def tokenize(text, strict=False):
         elif cur.isupper():
             yield Token.termname(it.read_termname(), debug)
         else:
-            raise UnknownTokenError(cur, debug)
+            raise UnknownTokenError(twochar, debug)
     yield Token(END, it.get_debug())
     yield Token(END, it.get_debug())

@@ -1,6 +1,7 @@
 import tokens
 from tokens import Literal, END
-from abstract import Application, Abstraction, Assignment, Program
+from abstract import (
+    Application, Abstraction, Assignment, ReduceAssign, Program)
 from errors import LambdaSyntaxError, ExpectedDifferentToken
 
 
@@ -83,11 +84,20 @@ def assignment(it, sugar):
     return Assignment(termname, value)
 
 
+def reduce_assign(it, sugar):
+    termname = it.must(tokens.Termname)
+    it.must(Literal.REDUCE)
+    value = term(it, sugar)
+    return ReduceAssign(termname, value)
+
+
 def line(it, prog, sugar=True):
     if it.now == Literal.NEWLINE:
         return
     if it.look_ahead.type == Literal.EQUAL:
         prog.add_line(assignment(it, sugar))
+    elif it.look_ahead.type == Literal.REDUCE:
+        prog.add_line(reduce_assign(it, sugar))
     else:
         prog.add_line(term(it, sugar))
 
