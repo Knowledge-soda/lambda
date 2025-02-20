@@ -77,7 +77,7 @@ def repl(strict=False, sugar=True, mode=2):
         elif term is not None:
             result = evaluate_term(term, mode)
             short = str(nice_version(result.decompile(program)))
-            if str(result) != short:
+            if str(result) != short and short != text:
                 print("= {}".format(short))
 
 
