@@ -65,11 +65,11 @@ class Application:
         self.right.get_free(free)
 
     def reduce(self):
+        if isinstance(self.left, Abstraction):
+            return (self.left.apply(self.right), True)
         newleft, left_changed = self.left.reduce()
         if left_changed:
             return (Application(newleft, self.right.clone()), True)
-        if isinstance(newleft, Abstraction):
-            return (newleft.apply(self.right), True)
         newright, right_changed = self.right.reduce()
         return (Application(newleft, newright), right_changed)
 
