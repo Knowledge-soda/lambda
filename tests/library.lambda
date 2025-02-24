@@ -10,11 +10,13 @@ SEVEN <= Sc SIX
 EIGHT <= Sc SEVEN
 NINE <= Sc EIGHT
 TEN <= Sc NINE
+
 Plus = \mn.m Sc n
 Times = \mnf.m(nf)
 Power = \mn.nm
 Pred = \nfx.n(\gh.h(gf))(\u.x)(\u.u)
 Minus = \mn.n Pred m
+
 Y = \f.(\x.f(xx))(\x.f(xx))
 True = \ab.a
 False = \ab.b
