@@ -93,7 +93,7 @@ def reduce_assign(it, sugar):
 
 
 def line(it, prog, sugar=True):
-    if it.now == Literal.NEWLINE:
+    if it.now.type == Literal.NEWLINE:
         return
     if it.look_ahead.type == Literal.EQUAL:
         prog.add_line(assignment(it, sugar))

@@ -1,0 +1,15 @@
+ZERO = \fx.x
+Sc = \nfx.f(nfx)
+ONE <= Sc ZERO
+TWO <= Sc ONE
+THREE <= Sc TWO
+FOUR <= Sc THREE
+FIVE <= Sc FOUR
+SIX <= Sc FIVE
+SEVEN <= Sc SIX
+EIGHT <= Sc SEVEN
+NINE <= Sc EIGHT
+TEN <= Sc NINE
+Plus = \mn.m Sc n
+Plus FOUR THREE
+Plus FIVE TWO ~ Plus THREE FOUR

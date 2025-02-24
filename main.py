@@ -49,13 +49,19 @@ def execute_program(text, strict=False, sugar=True):
     par = parser.ParserLL1(stream)
     prog = parser.program(par, sugar)
     for line in prog.get_singles():
-        print("{} ->".format(line))
-        res = full_reduce(line)
-        print("-> {}".format(nice_version(res)))
+        if isinstance(line, Test):
+            print(line)
+            print(line.test())
+        else:
+            print("{} ->".format(line))
+            res = full_reduce(line)
+            print("-> {}".format(nice_version(res)))
+    return prog
 
 
-def repl(strict=False, sugar=True, mode=2):
-    program = Program()
+def repl(strict=False, sugar=True, mode=2, program=None):
+    if program is None:
+        program = Program()
     while True:
         try:
             text = input("λ> ")
@@ -92,6 +98,9 @@ if __name__ == "__main__":
     argparser.add_argument(
         "-n", "--nosugar", action="store_true",
         help="disable syntatic sugar e.g. xy.T")
+    argparser.add_argument(
+        "-i", "--interactive", action="store_true",
+        help="activates REPL shell after running program")
     mode_group = argparser.add_mutually_exclusive_group()
     mode_group.add_argument(
         "-w", "--wait", action="store_true",
@@ -101,15 +110,19 @@ if __name__ == "__main__":
         "-p", "--print", action="store_true",
         help="REPL only, print every step (without stopping)")
     args = argparser.parse_args()
+
+    if args.wait:
+        mode = 2
+    elif args.print:
+        mode = 1
+    else:
+        mode = 0
+
     if args.filename:
         with open(args.filename, "r") as file:
             text = file.read()
-        execute_program(text, args.strict, not args.nosugar)
+        prog = execute_program(text, args.strict, not args.nosugar)
+        if args.interactive:
+            repl(args.strict, not args.nosugar, mode, prog)
     else:
-        if args.wait:
-            mode = 2
-        elif args.print:
-            mode = 1
-        else:
-            mode = 0
         repl(args.strict, not args.nosugar, mode)

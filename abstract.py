@@ -240,17 +240,26 @@ class Test:
 
 
 class Equality(Test):
+    def __str__(self):
+        return "{} == {}".format(self.left, self.right)
+
     def test(self):
         return self.left == self.right
 
 
 class Reduces(Test):
+    def __str__(self):
+        return "{} -> {}".format(self.left, self.right)
+
     def test(self):
         new_left = get_normal_form(self.left)
         return new_left == self.right
 
 
 class Convertible(Test):
+    def __str__(self):
+        return "{} ~ {}".format(self.left, self.right)
+
     def test(self):
         new_left = get_normal_form(self.left)
         new_right = get_normal_form(self.right)
